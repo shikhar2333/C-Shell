@@ -1,6 +1,7 @@
 #include"builtins.h"
 #include"directory.h"
 #include"history.h"
+#include"parse.h"
 void change_dir(struct cli_args arg)
 {
     char **args = arg.args;
@@ -72,7 +73,7 @@ void echo(struct cli_args arg)
 }
 void pinfo(struct cli_args arg)
 {
-    char pid[10];
+    char pid[20];
     char **args = arg.args;
     if(args[1]==NULL)   //pinfo of shell program
     {
@@ -84,26 +85,53 @@ void pinfo(struct cli_args arg)
     {
         sprintf(pid, "%s", args[1]);
     }
-    char symlink_path[100] = {"/proc/"};
+    char symlink_path[100] = {PROC};
+    char dir_path[100] = {PROC};
+
+    /* code for process state and virtual memory usage */
+    strcat(dir_path, pid);
+    strcat(dir_path, STAT);
+    int fd = open(dir_path, O_RDONLY);
+    if(fd<0)
+    {
+        perror("can't open proc file: ");
+        return;
+    }
+    char *proc_info = malloc(sizeof(char)*4*BUFF_SIZE);
+    size_t bytes = read(fd, proc_info, BUFF_SIZE);
+    if(bytes<0)
+    {
+        perror("Error in reading proc file: ");
+        return;
+    }
+    struct cli_args process_stat = parse_args(proc_info, DELIM);
+
+    /* code for finding path of the executable */
     strcat(symlink_path, pid);
-    strcat(symlink_path, "/exe");
+    strcat(symlink_path, EXE);
     struct stat pinfo;
     if(stat(symlink_path, &pinfo)<0)
     {
-        strcat(args[0], " for prcoess id:");
-        strcat(args[0], pid);
         perror(args[0]);
-        exit(EXIT_FAILURE);
+        return;
     }
     size_t buff_size = pinfo.st_size + 1;
     if(!pinfo.st_size)
     {
         buff_size = BUFF_SIZE;
     }
-    char *exec_path = malloc(buff_size);
+    char *exec_path = malloc(sizeof(char)*buff_size);
     size_t no_bytes = readlink(symlink_path, exec_path, buff_size);
+    if(no_bytes<0)
+    {
+        perror("readlink error()");
+        return;
+    }
     exec_path[no_bytes] = '\0';
-    printf("%d\n", exec_path);
+    printf("pid -- %s\n", pid);
+    printf("Process Status -- %s\n", process_stat.args[2]);
+    printf("Memory -- %s\n", process_stat.args[23]);
+    printf("Executable Path -- %s\n", exec_path);
 }
 void exitshell(struct cli_args arg)
 {

@@ -5,6 +5,9 @@
 #include <fcntl.h>
 #include<unistd.h>
 #define BUFF_SIZE 1000
+#define PROC "/proc/"
+#define STAT "/stat"
+#define EXE "/exe"
 void change_dir(struct cli_args);
 void echo(struct cli_args);
 char* pwd();
