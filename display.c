@@ -41,9 +41,3 @@ void shell_display(char *home_dir)
     }
     printf("<%s@%s:%s>", username, sysname, display_dir);
 }
-// inline char* mystrcat( char* dest, char* src)
-// {
-//      //while (*dest) dest++;
-//      while (*dest++ = *src++);
-//      return --dest;
-// }

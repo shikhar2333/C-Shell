@@ -11,3 +11,4 @@ char* pwd();
 void pinfo(struct cli_args);
 void exitshell(struct cli_args);
 void list(struct cli_args);
+void history(struct cli_args);

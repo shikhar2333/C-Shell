@@ -3,6 +3,7 @@
 #include"process.h"
 //#include <readline/readline.h>
 #include"display.h"
+#include"history.h"
 void shell_loop();
 int main(int argc, char **argv)
 {
@@ -18,21 +19,20 @@ void shell_loop()
     {
          perror("getcwd error");
     }
+    init();
     while(1)
     {
         shell_display(home_directory);
         //line = readline(display_str);
         line = read_line();
+        History(line);
         args = parse_args(line, ";");
         args.home_dir = home_directory;
-        //if(line[0]!='\0')
-        //{
         for(int i = 0; i<args.size; i++)
         {
             argz = parse_args(args.args[i], DELIM);
             argz.home_dir = home_directory;
             execute(argz);
         }
-        //}
     }
 }

@@ -10,4 +10,5 @@ struct cli_args
     char* home_dir;
 };
 #define DELIM " \t\r\n\a"
+#define NO_COMM 20
 #endif

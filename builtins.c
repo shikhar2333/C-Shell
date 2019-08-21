@@ -1,5 +1,6 @@
 #include"builtins.h"
 #include"directory.h"
+#include"history.h"
 void change_dir(struct cli_args arg)
 {
     char **args = arg.args;
@@ -25,7 +26,7 @@ void change_dir(struct cli_args arg)
     if(chdir(change_dir))
     {
         perror("chdir error");
-        exit(EXIT_FAILURE);
+        //exit(EXIT_FAILURE);
     }
 }
 char* pwd()
@@ -153,5 +154,11 @@ void list(struct cli_args arg)
     {
         directory.long_list(&directory, pwd(), 1);
     }
-    
+}
+void history(struct cli_args arg)
+{
+    char** args = arg.args;
+    int args_1 = (args[1] == NULL )? 10 : atoi(args[1]);
+    args_1 = args_1 < 10 ? args_1 : 10;
+    display_comm(args_1);
 }

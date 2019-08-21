@@ -1,9 +1,9 @@
 #include"process.h"
 #include"builtins.h"
-const char *builtins[] = {"cd", "echo", "pinfo", "exit", "ls"};
+const char *builtins[] = {"cd", "echo", "pinfo", "exit", "ls", "history"};
 void execute(struct cli_args arg)
 {
-    void (*builtins_ptr[])(struct cli_args) = {change_dir, echo, pinfo, exitshell, list};
+    void (*builtins_ptr[])(struct cli_args) = {change_dir, echo, pinfo, exitshell, list, history};
     char **args = arg.args;
     for(int i=0; i<sizeof(builtins)/sizeof(char *); i++)
     {
@@ -19,7 +19,7 @@ void execute(struct cli_args arg)
         printf("%s\n",present_dir);
         return;
     }
-    process(arg);
+    int status = process(arg);
 }
 void sigchld_handler(int signum)
 {
@@ -30,66 +30,56 @@ void sigchld_handler(int signum)
   {
         if(WIFEXITED(status))
         {
-            printf("extied status = %d and pid = %d\n", WEXITSTATUS(status), pid);
+            printf("Process with pid = %d exited normally with exit status = %d\n", WEXITSTATUS(status), pid);
         }
         else if(WIFSIGNALED(status))
         {
-            printf("killed by signal = %d and pid = %d\n", WTERMSIG(status), pid);
+            printf("Process with pid = %d killed by signal = %d\n", WTERMSIG(status), pid);
         }
         else if(WIFSTOPPED(status))
         {
-            printf("stopped by signal = %d and pid = %d\n", WSTOPSIG(status), pid);
+            printf("Process with pid = %d stopped by signal = %d\n", WSTOPSIG(status), pid);
         }
         else if(WIFCONTINUED(status))
         {
-            printf("continued pid = %d\n", pid);
+            printf("Process with pid = %d continued\n", pid);
         }
         printf("\n[%d] done.\n", pid);
    }
 }
 void sigint_handler(int signum)
 {
-    // pid_t pid;
-    // int status;
-    // pid = waitpid(-1, &status, WNOHANG);
-    // printf("%d\n", pid);
-    // if(pid==0)
-    // {
-    //     int stat = kill(pid, SIGTERM);
-    //     if(!stat)
-    //     {
-    //         printf("killed process with pid = %d\n", pid);
-    //     }
-    // }
     printf("caught signal %d\n", signum);
 }
-void process(struct cli_args arg)
+int process(struct cli_args arg)
 {
     pid_t pid_proc;
     pid_proc = fork();
-    int stat;
+    int stat,status;
     char **args = arg.args;
     int no_tokens = arg.size;
     int background = check_background(arg);
     signal(SIGCHLD, sigchld_handler);
+    if(background)
+    {
+        args[no_tokens-1] = NULL;
+    }
     //signal(SIGINT, sigint_handler);
     if(pid_proc<0)
     {
         perror("Failed fork");
+        return 0;
     }
     else
     {
         if(pid_proc==0)
         {
-            signal(SIGINT, SIG_IGN);
-            if(background)
-            {
-                args[no_tokens-1] = NULL;
-            }
-            if(execvp(args[0], args)<0)
+            int check = execvp(args[0], args);
+            if(check<0)
             {
                 strcat(args[0], " failed");
                 perror(args[0]);
+                return 0;
             }
             exit(EXIT_SUCCESS);
         }
@@ -97,14 +87,23 @@ void process(struct cli_args arg)
         {
             if(!background)
             {
-                int status = waitpid(pid_proc, &stat, WUNTRACED);
-                if(status<0)
-                {
-                    perror("waitpid error");
-                }
-            }           
+                do{
+                    status = waitpid(pid_proc, &stat, WUNTRACED);
+                    if(status<0)
+                    {
+                        perror("waitpid() error");
+                        exit(EXIT_FAILURE);
+                    }
+                }while( !WIFEXITED(stat) && !WIFSIGNALED(stat));   
+            }  
+            else
+            {
+                printf("Background process with pid = %d started\n", pid_proc);
+            }
+                  
         } 
     }
+    return 1;
 }
 int check_background(struct cli_args arg)
 { 
