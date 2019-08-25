@@ -1,9 +1,9 @@
 #include"process.h"
 #include"builtins.h"
-const char *builtins[] = {"cd", "echo", "pinfo", "exit", "ls", "history"};
+const char *builtins[] = {"cd", "echo", "pinfo", "exit", "ls", "history", "nightswatch"};
 void execute(struct cli_args arg)
 {
-    void (*builtins_ptr[])(struct cli_args) = {change_dir, echo, pinfo, exitshell, list, history};
+    void (*builtins_ptr[])(struct cli_args) = {change_dir, echoed, pinfo, exitshell, list, history, nightswatch};
     char **args = arg.args;
     for(int i=0; i<sizeof(builtins)/sizeof(char *); i++)
     {
@@ -19,26 +19,26 @@ void execute(struct cli_args arg)
         printf("%s\n",present_dir);
         return;
     }
-    int status = process(arg);
+    process(arg);
 }
 void sigchld_handler(int signum)
 {
   pid_t pid;
   int status;
   pid = waitpid(-1, &status, WNOHANG);
-  if(pid!=-1)
+  if(pid>0)
   {
         if(WIFEXITED(status))
         {
-            printf("Process with pid = %d exited normally with exit status = %d\n", WEXITSTATUS(status), pid);
+            printf("Process with pid = %d exited normally with exit status = %d\n", pid, WEXITSTATUS(status));
         }
         else if(WIFSIGNALED(status))
         {
-            printf("Process with pid = %d killed by signal = %d\n", WTERMSIG(status), pid);
+            printf("Process with pid = %d killed by signal = %d\n", pid, WTERMSIG(status));
         }
         else if(WIFSTOPPED(status))
         {
-            printf("Process with pid = %d stopped by signal = %d\n", WSTOPSIG(status), pid);
+            printf("Process with pid = %d stopped by signal = %d\n", pid, WSTOPSIG(status));
         }
         else if(WIFCONTINUED(status))
         {
@@ -51,7 +51,7 @@ void sigint_handler(int signum)
 {
     printf("caught signal %d\n", signum);
 }
-int process(struct cli_args arg)
+void process(struct cli_args arg)
 {
     pid_t pid_proc;
     pid_proc = fork();
@@ -68,7 +68,7 @@ int process(struct cli_args arg)
     if(pid_proc<0)
     {
         perror("Failed fork");
-        return 0;
+        return;
     }
     else
     {
@@ -79,7 +79,6 @@ int process(struct cli_args arg)
             {
                 strcat(args[0], " failed");
                 perror(args[0]);
-                return 0;
             }
             exit(EXIT_SUCCESS);
         }
@@ -103,7 +102,7 @@ int process(struct cli_args arg)
                   
         } 
     }
-    return 1;
+    return;
 }
 int check_background(struct cli_args arg)
 { 

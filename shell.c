@@ -12,9 +12,9 @@ int main(int argc, char **argv)
 }
 void shell_loop()
 {
-    char *line = NULL;
+    char *line,*display = NULL;
     struct cli_args args, argz;
-    char *home_directory = malloc(sizeof(char)*1000);
+    char home_directory[1000];
     if( getcwd(home_directory, 1000)==NULL )
     {
          perror("getcwd error");
@@ -22,7 +22,7 @@ void shell_loop()
     init();
     while(1)
     {
-        shell_display(home_directory);
+        display = shell_display(home_directory);
         //line = readline(display_str);
         line = read_line();
         History(line);
@@ -34,5 +34,8 @@ void shell_loop()
             argz.home_dir = home_directory;
             execute(argz);
         }
+        free(line);
+        free(display);
+        free(args.args);
     }
 }

@@ -2,33 +2,34 @@
 #include"directory.h"
 #include"history.h"
 #include"parse.h"
+#include"display.h"
 void change_dir(struct cli_args arg)
 {
     char **args = arg.args;
     int is_home = 0;
-    char* change_dir = NULL;
+    char *change_dir = malloc(100*sizeof(char));
     if(args[1]==NULL)
     {
        is_home = 1;
-       change_dir = arg.home_dir;
+       change_dir = strdup(arg.home_dir);
     }
     else
     {
-        is_home = !strcmp(args[1], "~");
+        is_home = (args[1][0]=='~') ? 1 : 0;
         if( is_home )
         {
-            change_dir = arg.home_dir;
+            change_dir = home_helper(arg.home_dir, args[1]);
         }
         else
         {
-            change_dir = args[1];
+            change_dir = strdup(args[1]);
         }   
     }
     if(chdir(change_dir))
     {
         perror("chdir error");
-        //exit(EXIT_FAILURE);
     }
+    free(change_dir);
 }
 char* pwd()
 {
@@ -39,7 +40,7 @@ char* pwd()
     }
     return buffer;
 }
-void echo(struct cli_args arg)
+void echoed(struct cli_args arg)
 {
     int size = 0;
     char **args = arg.args;
@@ -75,7 +76,7 @@ void pinfo(struct cli_args arg)
 {
     char pid[20];
     char **args = arg.args;
-    if(args[1]==NULL)   //pinfo of shell program
+    if(args[1]==NULL)    //pinfo of shell program
     {
         
         pid_t pid_proc = getpid();
@@ -140,47 +141,73 @@ void exitshell(struct cli_args arg)
 void list(struct cli_args arg)
 {
     struct dir directory;
-    directory.display_files = display_files;
     directory.permissions = permissions;
     directory.long_list = longlist;
+    directory.file_type = file_type;
     char **args = arg.args;
     int args_1 = (args[1]==NULL) ? 1 : 0;
-    int la_flag=0, a_flag=0, l_flag=0;
-    int is_dir = 0;
+    bool la_flag=0, a_flag=0, l_flag=0;
+    bool no_dir = 0;
+    int no_dirs = 0;
     if(!args_1)
     {
-        la_flag = !strcmp(args[1], "-la") | !strcmp(args[1], "-al");
-        a_flag = !strcmp(args[1], "-a");
-        l_flag = !strcmp(args[1], "-l");
-        is_dir = la_flag | a_flag | l_flag;
-    }
-    //printf("lflag = %d, aflag = %d, laflag = %d isdir = %d args1 = %d\n", l_flag, a_flag, la_flag, is_dir, args_1 );
-    if(args_1)
-    {
-        directory.display_files(&directory, ".", 0);
-    }
-    else if(!is_dir)
-    {
-        if( !strcmp(args[1], "~") )
+        for(int i = 1; args[i]!=NULL; i++)
         {
-           directory.display_files(&directory, arg.home_dir, 0);
+            if( !strcmp(args[i], "-a") )
+            {
+                a_flag = 1;
+                //break;
+            }
+            else if( !strcmp(args[i], "-l") )
+            {
+                l_flag = 1;
+                //break;
+            }
+            else if( !strcmp(args[i], "-la") || !strcmp(args[i], "-al"))
+            {
+                a_flag = 1;
+                l_flag = 1;
+                //break;
+            }
+            else
+            {
+                no_dirs++;
+            }   
         }
-        else
+        no_dir = a_flag | l_flag;
+        bool dir_flag = (!no_dir) ? 1 : 0;
+        if(no_dirs==0)
         {
-            directory.display_files(&directory, args[1], 0);
+            printf("%s\n", pwd());
+            directory.long_list(&directory, ".", dir_flag, a_flag, l_flag);
+            return;
+        }
+        //printf("%d %d %d\n", no_dir, l_flag, a_flag);
+        for(int j = 1; args[j]!=NULL; j++)
+        {
+            if( !strcmp(args[j], "-l") || !strcmp(args[j], "-la") || !strcmp(args[j], "-al") || !strcmp(args[j], "-a" ) )
+            {
+                continue;
+            }
+            if( args[j][0] == '~' )
+            {
+                char *buffer = malloc(100*sizeof(char));
+                buffer = home_helper(arg.home_dir, args[j]);
+                printf("%s\n", buffer);
+                directory.long_list(&directory, buffer, dir_flag, a_flag, l_flag);
+                free(buffer);
+            }
+            else
+            {
+                printf("%s\n", args[j]);
+                directory.long_list(&directory, args[j], dir_flag, a_flag, l_flag);
+            }
         }
     }
-    else if(a_flag)                    
+    else if(args_1)
     {
-        directory.display_files(&directory, pwd(), 1);
-    }
-    else if(l_flag)
-    {
-        directory.long_list(&directory, pwd(), 0);
-    }
-    else if(la_flag)
-    {
-        directory.long_list(&directory, pwd(), 1);
+        //printf("%d %d %d\n", args_1, l_flag, a_flag);
+        directory.long_list(&directory, ".", args_1, a_flag, l_flag);
     }
 }
 void history(struct cli_args arg)
@@ -189,4 +216,144 @@ void history(struct cli_args arg)
     int args_1 = (args[1] == NULL )? 10 : atoi(args[1]);
     args_1 = args_1 < 10 ? args_1 : 10;
     display_comm(args_1);
+}
+char *home_helper(char *home, char *rev_home)
+{
+    char *home_abspath = malloc(100*sizeof(char));
+    strcpy(home_abspath, home);
+    int index = strlen(home_abspath);
+    int len = strlen(rev_home);
+    for(int i=1; i<len; i++)
+    {
+        home_abspath[index++] = rev_home[i];
+    }
+    return home_abspath;
+}
+void nightswatch(struct cli_args arg)
+{
+    char **args = arg.args;
+    int interval, interupt, dirty;
+    if(args[1]!=NULL)
+    {
+        if(args[2]!=NULL)
+            interval = atoi(args[2]);
+        else
+        {
+            return;
+        }
+    }
+    else
+    {
+        return;
+    }
+    WINDOW* curr = initscr();
+	WINDOW * window; 
+	window = newwin(600,700,1,1);
+	keypad(window, TRUE);
+	noecho();
+	curs_set(0);
+	nodelay(window,1);
+    int start_time = time(NULL), now = time(NULL),prev = time(NULL);
+    int down = 4;
+    char* cpu = NULL;
+    FILE* fp = fopen("/proc/interrupts", "r");
+    if(fp==NULL)
+    {
+        exit(EXIT_FAILURE);
+    }
+    size_t size = 100;
+    getline(&cpu, &size, fp);
+    fclose(fp);
+    if(args[3]!=NULL)
+    {
+        interupt = !strcmp(args[3], "interrupt");
+        dirty = !strcmp(args[3], "dirty");
+    }
+    else
+    {
+        return;
+    }
+    while(1)
+    {
+        now = time(NULL);
+        if(wgetch(window) == 'q')
+        {
+            wclear(window);
+            break;
+        }
+        int val = (now - start_time)%interval;
+        if(interupt )
+        {
+            if( !val )
+            {
+                if( now!=prev )
+                {
+                    mvwaddstr(window,2,10,cpu);
+                    FILE *fp = fopen("/proc/interrupts", "r");
+                    if (fp == NULL)
+                    {
+                        exit(EXIT_FAILURE);
+                    }
+                    char* line = NULL;
+                    size_t len = 0;
+                    size_t read;
+                    int counter = 0;
+                    prev = now;
+                    while ((read = getline(&line, &len, fp)) != -1) 
+                    {
+                        counter++;
+                        if(counter==3)
+                            break;
+                    }
+                    mvwaddstr(window, down, 11, line);
+                    //printf("%s\n", line);
+                    down = down+1;
+                    fclose(fp);
+                }
+            }
+        }
+        else if(dirty)
+        {
+            if( !val )
+            {
+                if(now!=prev)
+                {
+                    FILE *fp = fopen("/proc/meminfo", "r");
+                    if (fp == NULL)
+                    {
+                        exit(EXIT_FAILURE);
+                    }
+                    char* line = NULL;
+                    size_t len = 0;
+                    size_t read;
+                    int counter = 0;
+                    prev = now;
+                    while ((read = getline(&line, &len, fp)) != -1) 
+                    {
+                        counter++;
+                        if(counter==17)
+                            break;
+                    }
+                    mvwaddstr(window, down, 11, line);
+                    // printf("%s\n", line);
+                    down=down+1;
+                    fclose(fp);
+                }
+            }
+        }
+        else
+        {
+            printf("Usage: nightswatch -n <time_interval> <interrupt/dirty>\n");
+            break;
+        }       
+        if(down>35)
+        {
+            wclear(window);
+            down = 4;
+        }
+    }
+    noecho();
+	curs_set(1);
+	delwin(window);
+	endwin();
 }

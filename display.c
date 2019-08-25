@@ -1,5 +1,5 @@
 #include"display.h"
-void shell_display(char *home_dir)
+char* shell_display(char *home_dir)
 {
     char *username = malloc(sizeof(char)*DISPLAY_SIZE);
     char *sysname = malloc(sizeof(char)*DISPLAY_SIZE);
@@ -14,17 +14,22 @@ void shell_display(char *home_dir)
     if( getcwd(working_dir, DISPLAY_SIZE)==NULL )
     {
         perror("getcwd error");
+        exit(EXIT_FAILURE);
     }
     int index = 0;
-    while(working_dir[index]==home_dir[index])
+    int s1 = strlen(working_dir), s2 = strlen(home_dir);
+    while(index<s2 && working_dir[index]==home_dir[index])
     {
         index++;
     }
-    int s1 = strlen(working_dir), s2 = strlen(home_dir);
     char *display_dir;
-    if(s1>=s2)
+    //printf("%d %d\n", index, strlen(home_dir));
+    //index--;
+    //printf("%d %d\n", index, strlen(home_dir));
+    if(index==s2)
     {
         int size = s1 - s2 + 1 ;
+        //printf("%d\n", size);
         display_dir = malloc( sizeof(char)*(size+1) );
         int i;
         int j = 0;
@@ -40,4 +45,5 @@ void shell_display(char *home_dir)
         strcpy(display_dir, working_dir);
     }
     printf("<%s@%s:%s>", username, sysname, display_dir);
+    return display_dir;
 }

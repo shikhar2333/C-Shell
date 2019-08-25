@@ -6,7 +6,7 @@ struct cli_args parse_args(char *line, char *limiter)
     char *token = strtok(line, limiter);
     int args_index = 0;
     int args_buff_size = ARGS_BUFF_SIZE;
-    size_t token_used = 0;
+    //size_t token_used = 0;
     while(token!=NULL)
     {
         args.args[args_index++] = token;
