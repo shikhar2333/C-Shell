@@ -59,7 +59,7 @@ void longlist(struct dir* directory, char *dir, bool dir_flag, bool flag_a, bool
             {
                 continue;
             }
-            printf("%s\n", file->d_name);
+            printf(COLOR_YELLOW "%s\n" COLOR_NONE, file->d_name);
             continue;
         }
         else if( flag_l || flag_l )
@@ -86,7 +86,7 @@ void longlist(struct dir* directory, char *dir, bool dir_flag, bool flag_a, bool
             user = getpwuid(file_stat.st_uid);
             printf("%15s %15s %10d ", user->pw_name, group->gr_name, file_stat.st_size);
             strftime(time, 60, "%b %d %H:%M", localtime(&(file_stat.st_mtime)));
-            printf(" %20s    %s\n", time, file->d_name);
+            printf(COLOR_YELLOW " %20s    %s\n" COLOR_NONE, time, file->d_name);
         }
     }
     closedir(folder);

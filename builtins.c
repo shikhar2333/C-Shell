@@ -134,10 +134,6 @@ void pinfo(struct cli_args arg)
     printf("Memory -- %s\n", process_stat.args[23]);
     printf("Executable Path -- %s\n", exec_path);
 }
-void exitshell(struct cli_args arg)
-{
-    exit(0);
-}
 void list(struct cli_args arg)
 {
     struct dir directory;
@@ -356,4 +352,30 @@ void nightswatch(struct cli_args arg)
 	curs_set(1);
 	delwin(window);
 	endwin();
+}
+void set_env(struct cli_args arg)
+{
+    if(arg.size<2 || arg.size>3)
+    {
+        printf("Usage: setenv <variable> <value>\n");
+        return;
+    }
+    if(arg.size==2)
+    {
+        setenv(arg.args[1], "", 1);
+    }
+    else if(arg.size==3)
+    {
+        setenv(arg.args[1], arg.args[2], 1);
+    }
+}
+void unset(struct cli_args arg)
+{
+    if(arg.size>2)
+    {
+        printf("Usage: unsetenv <variable>\n");
+        return;
+    }
+    if(unsetenv(arg.args[1])!=0)
+		printf("Error: Envriornment Variable Not Found\n");
 }

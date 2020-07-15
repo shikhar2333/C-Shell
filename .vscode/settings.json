@@ -3,6 +3,10 @@
         "unistd.h": "c",
         "thread": "c",
         "stdio.h": "c",
-        "directory.h": "c"
+        "directory.h": "c",
+        "headers.h": "c",
+        "history.h": "c",
+        "stat.h": "c",
+        "shell_loop.h": "c"
     }
 }

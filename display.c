@@ -44,6 +44,7 @@ char* shell_display(char *home_dir)
     {
         strcpy(display_dir, working_dir);
     }
-    printf("<%s@%s:%s>", username, sysname, display_dir);
-    return display_dir;
+    char *ans = malloc(sizeof(char)*DISPLAY_SIZE);
+    sprintf(ans, COLOR_CYAN "<%s@%s:%s>" COLOR_NONE, username, sysname, display_dir);
+    return ans;
 }

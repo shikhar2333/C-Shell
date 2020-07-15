@@ -1,15 +1,37 @@
 #include"process.h"
 #include"builtins.h"
-const char *builtins[] = {"cd", "echo", "pinfo", "exit", "ls", "history", "nightswatch"};
-void execute(struct cli_args arg)
+#include"jobs.h"
+const char *builtins[] = {"cd", "echo", "pinfo", "ls", "history", "nightswatch", "setenv", "unsetenv"};
+const char *job_commands[] = {"fg", "bg", "overkill", "kjob", "jobs", "quit"};
+
+void execute(int in_fd, int out_fd, struct cli_args arg)
 {
-    void (*builtins_ptr[])(struct cli_args) = {change_dir, echoed, pinfo, exitshell, list, history, nightswatch};
+    void (*builtins_ptr[])(struct cli_args) = {change_dir, echoed, pinfo, list, history, nightswatch, set_env, unset};
+    void (*jobs_ptr[])(struct cli_args) = {fg, bg, overkill, kjob, jobs};
     char **args = arg.args;
     for(int i=0; i<sizeof(builtins)/sizeof(char *); i++)
     {
         if( !strcmp(builtins[i],args[0]) )
         {
-            builtins_ptr[i](arg);
+            if(out_fd!=1)
+            {
+                int save_stdout = dup(1);
+                dup2(out_fd, 1);
+                close(out_fd);
+                builtins_ptr[i](arg); 
+                dup2(save_stdout, 1);
+                close(save_stdout);
+                return;      
+            }
+            builtins_ptr[i](arg); 
+            return;
+        }
+    }
+    for(int i=0; i<sizeof(job_commands)/sizeof(char *); i++)
+    {
+        if( !strcmp(job_commands[i],args[0]) )
+        {
+            jobs_ptr[i](arg);
             return;
         }
     }
@@ -19,52 +41,40 @@ void execute(struct cli_args arg)
         printf("%s\n",present_dir);
         return;
     }
-    process(arg);
+    process(in_fd, out_fd, arg);
 }
-void sigchld_handler(int signum)
-{
-  pid_t pid;
-  int status;
-  pid = waitpid(-1, &status, WNOHANG);
-  if(pid>0)
-  {
-        if(WIFEXITED(status))
-        {
-            printf("Process with pid = %d exited normally with exit status = %d\n", pid, WEXITSTATUS(status));
-        }
-        else if(WIFSIGNALED(status))
-        {
-            printf("Process with pid = %d killed by signal = %d\n", pid, WTERMSIG(status));
-        }
-        else if(WIFSTOPPED(status))
-        {
-            printf("Process with pid = %d stopped by signal = %d\n", pid, WSTOPSIG(status));
-        }
-        else if(WIFCONTINUED(status))
-        {
-            printf("Process with pid = %d continued\n", pid);
-        }
-        printf("\n[%d] done.\n", pid);
-   }
-}
-void sigint_handler(int signum)
-{
-    printf("caught signal %d\n", signum);
-}
-void process(struct cli_args arg)
+void process(int in_fd, int out_fd, struct cli_args arg)
 {
     pid_t pid_proc;
     pid_proc = fork();
     int stat,status;
-    char **args = arg.args;
     int no_tokens = arg.size;
+    char **args = malloc(sizeof(char*)*no_tokens);
+    int i;
+    for(i=0; i<no_tokens; i++)
+    {
+        args[i] = strdup(arg.args[i]);
+    }
+    args[i] = NULL;
     int background = check_background(arg);
     signal(SIGCHLD, sigchld_handler);
+    if(!background)
+    {
+        signal(SIGINT, sigint_handler);
+        struct sigaction s;
+        s.sa_flags = SA_SIGINFO | SA_RESTART;
+        s.sa_sigaction = HandleSignal;
+        sigaction(SIGTSTP, &s, NULL);
+    }
+    // else
+    // {
+    //     signal(SIGINT, SIG_IGN);
+    //     signal(SIGTSTP, SIG_IGN);
+    // }
     if(background)
     {
         args[no_tokens-1] = NULL;
     }
-    //signal(SIGINT, sigint_handler);
     if(pid_proc<0)
     {
         perror("Failed fork");
@@ -73,7 +83,22 @@ void process(struct cli_args arg)
     else
     {
         if(pid_proc==0)
-        {
+        {   
+            if(in_fd!=0)
+            {
+                dup2(in_fd, 0);
+                close(in_fd);
+            }
+            if(out_fd!=1)
+            {
+                dup2(out_fd, 1);
+                close(out_fd);
+            }    
+            if(background)
+            {
+                setpgid(0, 0);
+                printf("%d\n", getpgid(pid_proc));
+            }     
             int check = execvp(args[0], args);
             if(check<0)
             {
@@ -86,18 +111,28 @@ void process(struct cli_args arg)
         {
             if(!background)
             {
-                do{
+                //tcsetpgrp(0, pid_proc);
+                fgchild = pid_proc;
+                do{    
                     status = waitpid(pid_proc, &stat, WUNTRACED);
                     if(status<0)
                     {
                         perror("waitpid() error");
                         exit(EXIT_FAILURE);
                     }
-                }while( !WIFEXITED(stat) && !WIFSIGNALED(stat));   
+                    if(WIFSTOPPED(stat))
+                    {
+                        add_job(pid_proc, STATUS_SUSPENDED, args, FOREGROUND);
+                        printf("signal caught\n");
+                    }
+                }while( !WIFEXITED(stat) && !WIFSIGNALED(stat) && !WIFSTOPPED(stat) );  
+                //tcsetpgrp(0, getpid());
+                fgchild = 0; 
             }  
             else
             {
                 printf("Background process with pid = %d started\n", pid_proc);
+                add_job(pid_proc, STATUS_RUNNING, args, BACKGROUND);
             }
                   
         } 
