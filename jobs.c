@@ -362,7 +362,7 @@ void sig_handler(int signum)
 {
     siglongjmp(env, 42);
 }
-void exitshell(struct cli_args arg)
+void quit(struct cli_args arg)
 {
     overkill(arg);
     exit(0);

@@ -19,7 +19,7 @@ void fg(struct cli_args);
 void overkill(struct cli_args);
 void kjob(struct cli_args);
 void jobs(struct cli_args);
-void exitshell(struct cli_args);
+void quit(struct cli_args);
 extern pid_t fgchild;
 extern char home_directory[1000];
 extern sigjmp_buf env;
