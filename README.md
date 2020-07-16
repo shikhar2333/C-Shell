@@ -46,7 +46,8 @@
 * fg [jobNumber] : brings a running or a stopped background job with given job number to foreground.
 * bg [jobNumber] : changes a stopped background job to a running background job.
 * overkill : kills all background process at once.
-* nightswatch [​options​] <​Command​>: <Command> is either interrupt or dirty. 
+* nightswatch [​options​] <​Command​>: 
+    [Command] is either interrupt or dirty. 
     Command:
       1) interrupt:  Prints the number of times the CPU(s) has(ve) been interrupted by the ​keyboard controller (i8042 with ​IRQ 1​) every 'n' seconds specified by -n flag, until key 'q' is pressed.
       2) dirty:  Prints the size of the part of the memory which is ​dirty​.
