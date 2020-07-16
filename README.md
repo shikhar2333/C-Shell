@@ -4,7 +4,7 @@
 * echo: Usage: echo <strings_to_print>
 * pinfo: Usage: pinfo / pinfo <process_id>
 * nightswatch: Usage: nightswatch -n [​interval​] <command>
-* history: Usage: history/ history <num>
+* history
 * kjob 
 * jobs
 * overkill
@@ -49,4 +49,4 @@
     Command:
       1) interrupt:  Prints the number of times the CPU(s) has(ve) been interrupted by the ​keyboard controller (i8042 with ​IRQ 1​) every 'n' seconds specified by -n flag, until key 'q' is pressed.
       2) dirty:  Prints the size of the part of the memory which is ​dirty​.
-* history <num>: Ouputs the most recent 'num' commands executed on the shell.
+* history [num]: Ouputs the most recent 'num' commands executed on the shell.
