@@ -4,7 +4,7 @@
 ### 3) echo: Usage: [echo <strings_to_print>]
 ### 4) pinfo: Usage: [pinfo / pinfo <proces_id>]
 ### 5) nightswatch: Usage: [nightswatch -n [interval] <command>]
-### 6) history: Usage: [history / history <num>]
+### 6) history: Usage: [history <num>]
 ### 7) kjob 
 ### 8) jobs
 ### 9) overkill
