@@ -1,10 +1,10 @@
 ## Builtins implemented:
-* cd: Usage: [cd <dir_path>]
-* ls: Usage: [ls [options] <dir_paths>]
-* echo: Usage: [echo <strings_to_print>]
-* pinfo: Usage: [pinfo / pinfo <process_id>]
-* nightswatch: Usage: [nightswatch -n [interval] <command>]
-* history: Usage: [history/ history <num>]
+* cd: Usage: cd <dir_path>
+* ls: Usage: ls [​options​] <dir_paths>
+* echo: Usage: echo <strings_to_print>
+* pinfo: Usage: pinfo / pinfo <process_id>
+* nightswatch: Usage: nightswatch -n [​interval​] <command>
+* history: Usage: history/ history <num>
 * kjob 
 * jobs
 * overkill
