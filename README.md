@@ -43,7 +43,7 @@
 * unsetenv [VAR] : destroys the environment variable VAR.
 * jobs : prints a list of all currently running jobs.
 * kjob [jobNumber] [signalNumber] : takes the job id of a running job and sends a signal value to that process.
-* fg [jobNumber] : brings a running or a stopped background job with given job number to foreground.
+* `fg [jobNumber]` : brings a running or a stopped background job with given job number to foreground.
 * bg [jobNumber] : changes a stopped background job to a running background job.
 * overkill : kills all background process at once.
 * nightswatch [​options​] <​Command​>: 
