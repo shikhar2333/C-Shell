@@ -31,7 +31,7 @@
 * If the ‘UP’ key is pressed ‘K’ times consecutively, the K​th ​previous command should be executed.
 * If the ‘DOWN’ key is pressed ‘K’ times consecutively, the K​th ​future command should be executed.
 ### Commands implemented:
-* pwd : returns present working directory.
+* `pwd` : returns present working directory.
 * `cd [PATH_NAME]` : changes current working directory to the specified directory, if it exists. Otherwise, error is shown.
 * echo : Displays a string on the console.
 * `ls [OPTIONS] [PATH]` : displays information about the directory specified in PATH, if it exists, or about the PWD.
@@ -48,6 +48,7 @@
 * `overkill` : kills all background process at once.
 * `nightswatch [​options​] <​Command​>`: 
     `[Command]` is either interrupt or dirty. 
+    
     Command:
       1) `interrupt`:  Prints the number of times the CPU(s) has(ve) been interrupted by the ​keyboard controller (i8042 with ​IRQ 1​) every 'n' seconds specified by -n flag, until key 'q' is pressed.
       2) `dirty`:  Prints the size of the part of the memory which is ​dirty​.
